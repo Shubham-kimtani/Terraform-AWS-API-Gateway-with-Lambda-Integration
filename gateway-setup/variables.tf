@@ -2,14 +2,14 @@ variable "aws_region" {
   description = "AWS region for all resources."
 
   type    = string
-  default = "us-east-2"
+  default = "us-east-1"
 }
 
 variable "account_id" {
   description = "account id"
 
   type    = string
-  default = ""
+  default = "840118075213"
 }
 
 variable "stage_name" {

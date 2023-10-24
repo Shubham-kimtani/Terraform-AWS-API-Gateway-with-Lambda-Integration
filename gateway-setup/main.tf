@@ -1,26 +1,26 @@
 provider "aws" {
   region = var.aws_region
+  access_key = "AKIA4HGXQP5G7TB4OKR5"
+  secret_key = "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"
 }
-
-resource "aws_s3_bucket" "lambda_bucket" {
-  bucket = "mylambdabucketforapigateway2"
-
-  acl           = "private"
-  force_destroy = true
-}
-
 
 data "archive_file" "lambda_demo" {
   type = "zip"
 
-  source_dir  = "${path.module}/python-code"
-  output_path = "${path.module}/python-code.zip"
+  source_dir  = "${path.module}/nodejs"
+  output_path = "${path.module}/nodejs.zip"
 }
 
-resource "aws_s3_bucket_object" "lambda_demo" {
+resource "aws_s3_bucket" "lambda_bucket" {
+  bucket = "mylambdabucketforapigatewaysnodejs"
+
+  force_destroy = true
+}
+
+resource "aws_s3_object" "lambda_demo" {
   bucket = aws_s3_bucket.lambda_bucket.id
 
-  key    = "python-code.zip"
+  key    = "nodejs.zip"
   source = data.archive_file.lambda_demo.output_path
 
   etag = filemd5(data.archive_file.lambda_demo.output_path)
@@ -30,10 +30,10 @@ resource "aws_lambda_function" "lambda_demo" {
   function_name = "DemoLambdawithApiGateway1"
 
   s3_bucket = aws_s3_bucket.lambda_bucket.id
-  s3_key    = aws_s3_bucket_object.lambda_demo.key
+  s3_key    = aws_s3_object.lambda_demo.key
 
-  runtime = "python3.7"
-  handler = "demo.lambda_handler"
+  runtime = "nodejs18.x"
+  handler = "index.handler"
   source_code_hash = data.archive_file.lambda_demo.output_base64sha256
 
   role = aws_iam_role.lambda_exec.arn
@@ -107,6 +107,7 @@ resource "aws_lambda_permission" "apigw_lambda" {
 
 resource "aws_api_gateway_deployment" "api" {
   rest_api_id = aws_api_gateway_rest_api.api.id
+  depends_on = [ aws_api_gateway_method.api, aws_api_gateway_integration.integration ]
   lifecycle {
     create_before_destroy = true
   }
